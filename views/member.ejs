@@ -1,0 +1,37 @@
+<%- include('header') %>
+
+<main>
+    <h1>Member Functions</h1>
+    <section>
+        <h2>Add New Member</h2>
+        <form action="/api/members" method="POST">
+            <input type="text" name="name" placeholder="Name" required>
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <input type="date" name="dob" placeholder="Date of Birth" required>
+            <textarea name="fitness_goals" placeholder="Fitness Goals"></textarea>
+            <textarea name="health_metrics" placeholder="Health Metrics"></textarea>
+            <button type="submit">Add Member</button>
+        </form>
+    </section>
+    <section>
+        <h2>Update Profile</h2>
+        <form id="updateProfileForm">
+            <input type="email" name="email" placeholder="Your Current Email" required>
+            <input type="password" name="password" placeholder="Your Current Password" required>
+            <br>
+            <input type="email" name="newEmail" placeholder="New Email (optional)">
+            <input type="password" name="newPassword" placeholder="New Password (optional)">
+            <input type="date" name="newMetrics" placeholder="New Health Date of Birth  (optional)">
+            <input type="text" name="newName" placeholder="New Name (optional)">
+            <input type="text" name="newGoals" placeholder="New Fitness Goals (optional)">
+            <input type="text" name="newMetrics" placeholder="New Health Metrics (optional)">
+            <br>
+            <button type="submit">Update Profile</button>
+        </form>
+    </section>
+
+</main>
+
+<%- include('footer') %>
+<script src="/js/updateProfile.js"></script>

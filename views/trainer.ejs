@@ -1,0 +1,25 @@
+<%- include('header') %>
+
+<main>
+    <h1>Administrative Staff Functions</h1>
+    <section>
+        <h2>Manage Room Bookings</h2>
+        <form action="/api/rooms/book" method="POST">
+            <input type="text" name="room_id" placeholder="Room ID" required>
+            <input type="datetime-local" name="booking_time" placeholder="Booking Time" required>
+            <button type="submit">Book Room</button>
+        </form>
+    </section>
+    <section>
+        <h2>Process Payment</h2>
+        <form action="/api/payments/process" method="POST">
+            <input type="number" name="member_id" placeholder="Member ID" required>
+            <input type="number" name="amount" placeholder="Amount" step="0.01" required>
+            <input type="date" name="payment_date" placeholder="Payment Date" required>
+            <textarea name="description" placeholder="Payment Description"></textarea>
+            <button type="submit">Process Payment</button>
+        </form>
+    </section>
+</main>
+
+<%- include('footer') %>

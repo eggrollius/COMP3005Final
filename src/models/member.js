@@ -32,7 +32,7 @@ class Member {
    * Create a new member in the database.
    * @param {string} name - Member's name.
    * @param {string} email - Member's email address.
-   * @param {string} password - Member's hashed password.
+   * @param {string} password - Member's password.
    * @param {Date} dob - Member's date of birth.
    * @param {Object} fitness_goals - Member's fitness goals stored as a JSON object.
    * @param {Object} health_metrics - Member's health metrics stored as a JSON object.
@@ -47,14 +47,64 @@ class Member {
   }
 
   /**
-   * Update a member's details in the database.
-   * @param {number} id - Unique identifier for the member.
-   * @param {Object} updates - An object containing the updates to apply to the member.
-   * @returns {Promise<Object>} A promise that resolves to the updated member object.
+   * Update a member's details in the database, potentially including changing their email, after verifying their current password.
+   * @param {string} currentEmail - Current email of the member, used to locate them in the database.
+   * @param {string} currentPassword - Current password of the member, for login verification purpose.
+   * @param {Object} updates - An object containing the updates to apply to the member. This may include a new email.
+   * @param {string} [newEmail] - Optional new email to replace the existing one, if different.
+   * @returns {Promise<Object>} A promise that resolves to the updated member object, or null if no updates are made.
    */
-  static async update(id, updates) {
-    const existingMember = await this.findById(id);
-    const newDetails = { ...existingMember, ...updates };
-    const { rows } = await pool.query(
-      'UPDATE members SET name = $1, email = $2, password = $3, dob = $4, fitness_goals = $5, health_metrics = $6 WHERE member_id = $7 RETURNING *',
-      [newDetails.name, newDetails.email, newDetails.password, newDetails.dob, JSON.stringify(newDetails.fitness_goals), JSON
+  static async updateByEmail(currentEmail, currentPassword, updates, newEmail) {
+    // First verify the member's current password
+    try {
+      const { rows } = await pool.query('SELECT password FROM members WHERE email = $1', [currentEmail]);
+      if (rows.length === 0) {
+        throw new Error("Member not found.");
+      }
+
+      const passwordMatches = rows[0].password == currentPassword;
+      if (!passwordMatches) {
+        throw new Error("Invalid password.");
+      }
+    } catch (error) {
+      console.error('Authentication failed:', error);
+      throw error;  // Pass the error up to the route handler to deal with it appropriately
+    }
+
+    // Proceed with updates if password is verified
+    const setClause = [];
+    const values = [];
+    let valueCount = 1;
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value && key !== 'email') {
+        setClause.push(`${key} = $${valueCount}`);
+        values.push(value);
+        valueCount++;
+      }
+    });
+
+    if (newEmail && newEmail !== currentEmail) {
+      setClause.push(`email = $${valueCount}`);
+      values.push(newEmail);
+      valueCount++;
+    }
+
+    if (setClause.length === 0) {
+      return null;
+    }
+
+    const query = `UPDATE members SET ${setClause.join(', ')} WHERE email = $${valueCount} RETURNING *`;
+    values.push(currentEmail);
+
+    try {
+      const { rows } = await pool.query(query, values);
+      return rows[0];
+    } catch (error) {
+      console.error('Failed to update member by email:', error);
+      throw error;
+    }
+  }
+}
+
+module.exports = Member;
