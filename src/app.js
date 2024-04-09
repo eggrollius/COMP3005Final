@@ -1,5 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const Trainer = require('./models/trainer');  
+const FitnessClass = require('./models/fitnessClass');  
 
 const app = express();
 
@@ -15,14 +17,24 @@ app.set('views', './views');
 
 // Routes
 const memberRoutes = require('./routes/memberRoutes');  
-app.use('/api', memberRoutes);
+const trainerRoutes = require('./routes/trainerRoutes');  
+app.use('/api/members', memberRoutes);
+app.use('/api/trainers', trainerRoutes);
 
 app.get('/', (req, res) => {
   res.render('index');
 });
 
-app.get('/member', (req, res) => {
-  res.render('member');
+app.get('/member', async (req, res) => {
+  try {
+    const trainers = await Trainer.findAll();
+    const fitnessClasses = await FitnessClass.findAll();
+
+    res.render('member', { trainers, fitnessClasses });  // Pass the trainers data to the EJS template
+  } catch (error) {
+      console.error('Error fetching trainers:', error);
+      res.status(500).send('Error loading page');
+  }
 });
 
 app.get('/trainer', (req, res) => {

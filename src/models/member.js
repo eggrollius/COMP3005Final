@@ -17,6 +17,19 @@ class Member {
     const { rows } = await pool.query('SELECT * FROM members');
     return rows;
   }
+  
+  static async authenticate(email, password) {
+    const { rows } = await pool.query('SELECT member_id, password FROM members WHERE email = $1', [email]);
+    if (rows.length === 0) {
+      throw new Error("Member not found.");
+    }
+    if(rows[0].password != password) {
+      throw new Error("Password does not match");
+    }
+
+    return rows[0].member_id;
+  }
+
 
   /**
    * Find a member by their ID.
@@ -28,6 +41,18 @@ class Member {
     return rows[0];
   }
 
+  static async searchMembersByName(name) {
+    try {
+        const { rows } = await pool.query(
+            'SELECT member_id, name, email, dob FROM members WHERE name ILIKE $1 ORDER BY name',
+            [`%${name}%`]
+        );
+        return { success: true, members: rows };
+    } catch (error) {
+        console.error('Error searching members:', error);
+        return { success: false, message: 'Database query failed', error: error.message };
+    }
+}
   /**
    * Create a new member in the database.
    * @param {string} name - Member's name.
@@ -54,15 +79,10 @@ class Member {
    * @param {string} [newEmail] - Optional new email to replace the existing one, if different.
    * @returns {Promise<Object>} A promise that resolves to the updated member object, or null if no updates are made.
    */
-  static async updateByEmail(currentEmail, currentPassword, updates, newEmail) {
+  static async updateByEmail(currentEmail, currentPassword, updates) {
     // First verify the member's current password
     try {
-      const { rows } = await pool.query('SELECT password FROM members WHERE email = $1', [currentEmail]);
-      if (rows.length === 0) {
-        throw new Error("Member not found.");
-      }
-
-      const passwordMatches = rows[0].password == currentPassword;
+      passwordMatches = authenticate(currentEmail, currentPassword);
       if (!passwordMatches) {
         throw new Error("Invalid password.");
       }
@@ -76,18 +96,21 @@ class Member {
     const values = [];
     let valueCount = 1;
 
-    Object.entries(updates).forEach(([key, value]) => {
-      if (value && key !== 'email') {
-        setClause.push(`${key} = $${valueCount}`);
-        values.push(value);
+    console.log(JSON.stringify(updates));
+
+    for (const [key, value] of Object.entries(updates)) {
+      if (value !== undefined && value !== null && (typeof value !== 'string' || value.length > 0)) {
+        if (typeof value === 'object' && (key === 'fitness_goals' || key === 'health_metrics')) {
+          // Stringify JSON for JSONB columns
+          setClause.push(`${key} = $${valueCount}`);
+          values.push(JSON.stringify(value));
+        } else {
+          // Handle other types normally
+          setClause.push(`${key} = $${valueCount}`);
+          values.push(value);
+        }
         valueCount++;
       }
-    });
-
-    if (newEmail && newEmail !== currentEmail) {
-      setClause.push(`email = $${valueCount}`);
-      values.push(newEmail);
-      valueCount++;
     }
 
     if (setClause.length === 0) {
@@ -97,6 +120,10 @@ class Member {
     const query = `UPDATE members SET ${setClause.join(', ')} WHERE email = $${valueCount} RETURNING *`;
     values.push(currentEmail);
 
+    // Log the query and parameters
+    console.log("Executing SQL Query:", query);
+    console.log("With Parameters:", values);
+
     try {
       const { rows } = await pool.query(query, values);
       return rows[0];
@@ -105,6 +132,81 @@ class Member {
       throw error;
     }
   }
+
+  /**
+   * Schedules a personal training session for a member, ensuring the session time does not overlap with existing sessions and is within the trainer's available hours.
+   * @param {string} email - The email ID of the member scheduling the session.
+   * @param {string} password - The password of this member.
+   * @param {number} trainerId - The ID of the trainer who will conduct the session.
+   * @param {string} startTime - The start timestamp when the session is scheduled to begin.
+   * @param {string} endTime - The end timestamp when the session is scheduled to end.
+   * @returns {Promise<Object>} A promise that resolves to the newly created training session object.
+   */
+  static async scheduleTrainingSession(email, password, trainerId, startTime, endTime) {
+    
+    try {
+      const memberId = await this.authenticate(email, password);
+      console.log('Scheduling training session with:', {
+        memberId,
+        email,
+        password,
+        trainerId,
+        startTime,
+        endTime
+      });
+      
+      const availabilityQuery = `
+          SELECT * FROM trainer_availability
+          WHERE trainer_id = $1 AND available_from <= $2 AND available_to >= $3;
+      `;
+      const overlapQuery = `
+          SELECT * FROM personal_training_sessions
+          WHERE trainer_id = $1 AND NOT (end_time <= $2 OR start_time >= $3);
+      `;
+
+      // Check trainer's availability
+      const availabilityResult = await pool.query(availabilityQuery, [trainerId, startTime, endTime]);
+      if (availabilityResult.rows.length === 0) {
+          throw new Error('Trainer is not available during these times.');
+      }
+
+      // Check for overlapping sessions
+      const overlapResult = await pool.query(overlapQuery, [trainerId, startTime, endTime]);
+      if (overlapResult.rows.length > 0) {
+          throw new Error('Trainer has an overlapping booking.');
+      }
+
+      // Schedule the session
+      const insertQuery = `
+          INSERT INTO personal_training_sessions (member_id, trainer_id, start_time, end_time)
+          VALUES ($1, $2, $3, $4)
+          RETURNING *;
+      `;
+      const { rows } = await pool.query(insertQuery, [memberId, trainerId, startTime, endTime]);
+      return rows[0];
+
+    } catch(error) {
+      console.error('Failed to schedule training session:', error);
+      throw error;
+    }
+  }
+
+  static async enrollInClass(memberId, classId) {
+    const { rows: existingEnrollments } = await pool.query(
+        'SELECT * FROM class_enrollments WHERE member_id = $1 AND class_id = $2',
+        [memberId, classId]
+    );
+    if (existingEnrollments.length > 0) {
+        throw new Error('Already enrolled in this class');
+    }
+
+    const { rows } = await pool.query(
+        'INSERT INTO class_enrollments (member_id, class_id) VALUES ($1, $2) RETURNING *',
+        [memberId, classId]
+    );
+    return rows[0]; 
+  }
+
 }
 
 module.exports = Member;

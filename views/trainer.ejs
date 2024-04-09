@@ -1,25 +1,36 @@
 <%- include('header') %>
 
 <main>
-    <h1>Administrative Staff Functions</h1>
     <section>
-        <h2>Manage Room Bookings</h2>
-        <form action="/api/rooms/book" method="POST">
-            <input type="text" name="room_id" placeholder="Room ID" required>
-            <input type="datetime-local" name="booking_time" placeholder="Booking Time" required>
-            <button type="submit">Book Room</button>
+        <h2>Trainer Login</h2>
+        <form id="trainerLoginForm">
+            <input type="number" name="trainerId" placeholder="Trainer ID" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Login</button>
         </form>
     </section>
-    <section>
-        <h2>Process Payment</h2>
-        <form action="/api/payments/process" method="POST">
-            <input type="number" name="member_id" placeholder="Member ID" required>
-            <input type="number" name="amount" placeholder="Amount" step="0.01" required>
-            <input type="date" name="payment_date" placeholder="Payment Date" required>
-            <textarea name="description" placeholder="Payment Description"></textarea>
-            <button type="submit">Process Payment</button>
+
+    <section id="availabilitySection" style="display:none;">
+        <h2>Manage Availability</h2>
+        <div id="availabilityList"></div>
+        <h3>Add New Availability</h3>
+        <form id="addAvailabilityForm">
+            <input type="datetime-local" name="availableFrom" required>
+            <input type="datetime-local" name="availableTo" required>
+            <button type="submit">Add Availability</button>
         </form>
+    </section>
+
+    <section>
+        <h2>Search Member Profiles</h2>
+        <form id="searchMemberForm">
+            <input type="text" name="memberName" placeholder="Enter member name" required>
+            <button type="submit">Search</button>
+        </form>
+        <div id="memberResults"></div>
     </section>
 </main>
 
 <%- include('footer') %>
+<script src="/js/trainerSchedule.js"></script>
+<script src="/js/searchMembers.js"></script>

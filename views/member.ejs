@@ -19,19 +19,78 @@
         <form id="updateProfileForm">
             <input type="email" name="email" placeholder="Your Current Email" required>
             <input type="password" name="password" placeholder="Your Current Password" required>
-            <br>
             <input type="email" name="newEmail" placeholder="New Email (optional)">
             <input type="password" name="newPassword" placeholder="New Password (optional)">
-            <input type="date" name="newMetrics" placeholder="New Health Date of Birth  (optional)">
+            <input type="date" name="newDob" placeholder="New Date of Birth (optional)">
             <input type="text" name="newName" placeholder="New Name (optional)">
-            <input type="text" name="newGoals" placeholder="New Fitness Goals (optional)">
-            <input type="text" name="newMetrics" placeholder="New Health Metrics (optional)">
-            <br>
+    
+            <fieldset>
+                <legend>New Fitness Goals</legend>
+                <div id="fitnessGoalsContainer">
+                    <!-- Dynamic fitness goals inputs will be added here -->
+                </div>
+                <button type="button" onclick="addFitnessGoal()">Add Fitness Goal</button>
+            </fieldset>
+    
+            <fieldset>
+                <legend>New Health Metrics</legend>
+                <div id="healthMetricsContainer">
+                    <!-- Dynamic health metrics inputs will be added here -->
+                </div>
+                <button type="button" onclick="addHealthMetric()">Add Health Metric</button>
+            </fieldset>
+    
             <button type="submit">Update Profile</button>
         </form>
     </section>
+    
+    <section>
+        <h2>Book Personal Training Session</h2>
+        <form id="bookTrainingSessionForm">
+            <input type="email" name="email" placeholder="Your Email" required>
+            <input type="password" name="password" placeholder="Your Password" required>
+            
+            <label for="trainerSelect">Select Trainer:</label>
+            <select id="trainerSelect" name="trainerId" required>
+                <option value="">--Please choose a trainer--</option>
+                <% trainers.forEach(function(trainer) { %>
+                    <option value="<%= trainer.trainer_id %>"><%= trainer.name %> - <%= trainer.specialization %></option>
+                <% }); %>
+            </select>
 
+            <label for="sessionDate">Session Date:</label>
+            <input type="date" id="sessionDate" name="sessionDate" required>
+
+            <label for="startTime">Start Time:</label>
+            <input type="time" id="startTime" name="startTime" required>
+
+            <label for="endTime">End Time:</label>
+            <input type="time" id="endTime" name="endTime" required>
+
+            <button type="submit">Book Session</button>
+        </form>
+    </section>
+
+    <section>
+        <h2>Join Group Fitness Class</h2>
+        <form id="joinFitnessClassForm">
+            <input type="email" name="email" placeholder="Your Email" required>
+            <input type="password" name="password" placeholder="Your Password" required>
+            
+            <label for="classSelect">Select Fitness Class:</label>
+            <select id="classSelect" name="classId" required>
+                <option value="">--Select a Class--</option>
+                <% fitnessClasses.forEach(function(fitnessClass) { %>
+                    <option value="<%= fitnessClass.class_id %>"><%= fitnessClass.name %> - <%= fitnessClass.schedule %></option>
+                <% }); %>
+            </select>
+
+            <button type="submit">Join Class</button>
+        </form>
+    </section>
 </main>
 
 <%- include('footer') %>
 <script src="/js/updateProfile.js"></script>
+<script src="/js/bookTrainingSession.js"></script>
+<script src="/js/joinFitnessClass.js"></script>
