@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const Trainer = require('./models/trainer');  
 const FitnessClass = require('./models/fitnessClass');  
+const Room = require('./models/room');  
 
 const app = express();
 
@@ -17,9 +18,14 @@ app.set('views', './views');
 
 // Routes
 const memberRoutes = require('./routes/memberRoutes');  
-const trainerRoutes = require('./routes/trainerRoutes');  
+const trainerRoutes = require('./routes/trainerRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const fitnessClassRoutes = require('./routes/fitnessClassRoutes');
+
 app.use('/api/members', memberRoutes);
 app.use('/api/trainers', trainerRoutes);
+app.use('/api/rooms', adminRoutes);
+app.use('/api/fitnessClass', fitnessClassRoutes);
 
 app.get('/', (req, res) => {
   res.render('index');
@@ -41,8 +47,18 @@ app.get('/trainer', (req, res) => {
   res.render('trainer');
 });
 
-app.get('/admin', (req, res) => {
-  res.render('admin');
+app.get('/admin', async (req, res) => {
+  try {
+    const rooms = await Room.findAll();
+    const trainers = await Trainer.findAll();
+    const groupFitnessClasses = await FitnessClass.findAll();
+
+    res.render('admin', { rooms, trainers, groupFitnessClasses });
+  } catch(error) {
+    console.error('Error fetching rooms', error);
+    res.status(500).send('Error loading page');
+  }
+
 });
 
 // Listen on port 3000

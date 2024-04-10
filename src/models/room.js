@@ -4,6 +4,7 @@
  */
 
 const pool = require('../../config/db');  // Database connection pool
+const Admin = require('../models/adminStaff');
 
 /**
  * Class representing a room.
@@ -42,6 +43,19 @@ class Room {
     return rows[0];
   }
 
+  static async book(room_id, start_time, end_time, purpose, admin_id) {
+    const adminExists = await Admin.exists(admin_id);
+    if(!adminExists) {
+      throw new Error('Admin does not exists');
+    }
+
+    const { rows } = await pool.query(
+      'INSERT INTO room_bookings (room_id, start_time, end_time, purpose, booked_by) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [room_id, start_time, end_time, purpose, admin_id]
+    );
+
+    return rows[0];
+  }
   /**
    * Update details of an existing room in the database.
    * @param {number} id - Unique identifier of the room to update.
@@ -57,10 +71,20 @@ class Room {
     );
     return rows[0];
   }
-
   /**
    * Delete a room from the database.
    * @param {number} id - Unique identifier for the room to delete.
-   * @returns {Promise<Object>} A promise that resolves to the room object that was deleted.
+   * @returns {Promise<Object>} A promise that resolves to the room object that was deleted, or null if no room was found with that ID.
    */
-  static 
+  static async delete(id) {
+    const { rows: existingRows } = await pool.query('SELECT * FROM rooms WHERE room_id = $1', [id]);
+    if (existingRows.length === 0) {
+      return null; // No room found to delete
+    }
+
+    const { rows } = await pool.query('DELETE FROM rooms WHERE room_id = $1 RETURNING *', [id]);
+    return rows[0]; // Returns the deleted room object
+  }
+}
+
+module.exports = Room;

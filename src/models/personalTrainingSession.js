@@ -51,13 +51,51 @@ class PersonalTrainingSession {
    */
   static async update(id, updates) {
     const existingSession = await this.findById(id);
-    const newDetails = { ...existingSession, ...updates };
-    const { rows } = await pool.query(
-      'UPDATE personal_training_sessions SET member_id = $1, trainer_id = $2, scheduled_time = $3 WHERE session_id = $4 RETURNING *',
-      [newDetails.memberId, newDetails.trainerId, newDetails.scheduledTime, id]
-    );
+    if (!existingSession) {
+      throw new Error('Session not found');
+    }
+
+    const { member_id, trainer_id, start_time, end_time } = existingSession;
+    
+    const newDetails = {
+      memberId: updates.member_id || member_id,
+      trainerId: updates.trainer_id || trainer_id,
+      startTime: updates.start_time || start_time,
+      endTime: updates.end_time || end_time
+    };
+    console.log(newDetails);
+    // Check trainer availability
+    const availabilityQuery = `
+      SELECT * FROM trainer_availability
+      WHERE trainer_id = $1 AND available_from <= $2 AND available_to >= $3;
+    `;
+    const availabilityResult = await pool.query(availabilityQuery, [newDetails.trainerId, newDetails.startTime, newDetails.endTime]);
+    if (availabilityResult.rows.length === 0) {
+      throw new Error('Trainer is not available during these times.');
+    }
+
+    // Check for overlapping sessions
+    const overlapQuery = `
+      SELECT * FROM personal_training_sessions
+      WHERE session_id != $1 AND trainer_id = $2 AND NOT (end_time <= $3 OR start_time >= $4);
+    `;
+    const overlapResult = await pool.query(overlapQuery, [id, newDetails.trainerId, newDetails.startTime, newDetails.endTime]);
+    if (overlapResult.rows.length > 0) {
+      throw new Error('Trainer has an overlapping booking.');
+    }
+
+    // Update the session
+    const updateQuery = `
+      UPDATE personal_training_sessions
+      SET member_id = $1, trainer_id = $2, start_time = $3, end_time = $4
+      WHERE session_id = $5
+      RETURNING *;
+    `;
+    const { rows } = await pool.query(updateQuery, [newDetails.memberId, newDetails.trainerId, newDetails.startTime, newDetails.endTime, id]);
     return rows[0];
   }
+
+  
 
   /**
    * Delete a personal training session from the database.

@@ -30,6 +30,57 @@ class Member {
     return rows[0].member_id;
   }
 
+  /**
+   * Retrieves all class enrollments for a given member, including class details.
+   * @param {number} memberId - The ID of the member whose enrollments are to be fetched.
+   * @returns {Promise<Array>} A promise that resolves to an array of class enrollment details.
+   */
+  static async getClassEnrollments(memberId) {
+    const query = `
+        SELECT 
+            ce.enrollment_id,
+            fc.class_id,
+            fc.name AS class_name,
+            fc.schedule,
+            fc.room_id,
+            fc.capacity,
+            ce.enrollment_date
+        FROM 
+            class_enrollments ce
+            INNER JOIN fitness_classes fc ON ce.class_id = fc.class_id
+        WHERE 
+            ce.member_id = $1;
+    `;
+
+    try {
+        const { rows } = await pool.query(query, [memberId]);
+        return rows;
+    } catch (error) {
+        console.error('Error retrieving class enrollments:', error);
+        throw error;
+    }
+  }
+
+
+  static async getProfile(memberId) {
+    const { rows } = await pool.query(
+        'SELECT member_id, name, email, dob, fitness_goals, health_metrics FROM members WHERE member_id = $1',
+        [memberId]
+    );
+    return rows[0];
+  }
+ 
+  static async getTrainingSessions(memberId) {
+    const query = `
+        SELECT pts.session_id, pts.trainer_id, pts.start_time, pts.end_time, t.name as trainer_name
+        FROM personal_training_sessions pts
+        JOIN trainers t ON pts.trainer_id = t.trainer_id
+        WHERE pts.member_id = $1;
+    `;
+
+    const { rows } = await pool.query(query, [memberId]);
+    return rows;
+  }
 
   /**
    * Find a member by their ID.
@@ -82,10 +133,7 @@ class Member {
   static async updateByEmail(currentEmail, currentPassword, updates) {
     // First verify the member's current password
     try {
-      passwordMatches = authenticate(currentEmail, currentPassword);
-      if (!passwordMatches) {
-        throw new Error("Invalid password.");
-      }
+      let memberId = this.authenticate(currentEmail, currentPassword);
     } catch (error) {
       console.error('Authentication failed:', error);
       throw error;  // Pass the error up to the route handler to deal with it appropriately
@@ -207,6 +255,24 @@ class Member {
     return rows[0]; 
   }
 
+
+    /**
+     * Remove a class enrollment by enrollment ID.
+     * @param {number} enrollmentId - The ID of the class enrollment to remove.
+     * @returns {Promise<boolean>} A promise that resolves to a boolean indicating success or failure.
+     */
+    static async removeFromClass(enrollmentId) {
+      try {
+          const result = await pool.query(
+              'DELETE FROM class_enrollments WHERE enrollment_id = $1 RETURNING *;',
+              [enrollmentId]
+          );
+          return result.rowCount > 0; // Returns true if any rows were deleted, false otherwise
+      } catch (error) {
+          console.error('Error removing class enrollment:', error);
+          throw error; // Rethrow to handle errors at a higher level
+      }
+  }
 }
 
 module.exports = Member;

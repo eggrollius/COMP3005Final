@@ -1,6 +1,35 @@
 const express = require('express');
 const router = express.Router();
 const Member = require('../models/member');  
+const PersonalTrainingSession = require('../models/personalTrainingSession');
+
+router.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const memberId = await Member.authenticate(email, password);
+        const profile = await Member.getProfile(memberId);
+        const trainingSessions = await Member.getTrainingSessions(memberId);
+        const class_enrollments = await Member.getClassEnrollments(memberId);
+
+        res.json({
+            success: true,
+            message: "Login successful",
+            data: {
+                profile,
+                trainingSessions,
+                class_enrollments
+            }
+        });
+    } catch (error) {
+        if (error.message === "Member not found." || error.message === "Password does not match") {
+            res.status(401).json({ success: false, message: error.message });
+        } else {
+            console.error('Login error:', error);
+            res.status(500).json({ success: false, message: 'Internal server error' });
+        }
+    }
+});
+
 
 // POST route to create a new member
 router.post('/', async (req, res) => {
@@ -76,6 +105,60 @@ router.post('/book-session', async (req, res) => {
     }
 });
 
+router.post('/sessions/update/:id', async (req, res) => {
+    const { id } = req.params;
+    const updates = req.body;
+  
+    try {
+      const existingSession = await PersonalTrainingSession.findById(id);
+      if (!existingSession) {
+        return res.status(404).json({
+          success: false, 
+          message: 'Session not found.'
+        });
+      }
+  
+      const updatedSession = await PersonalTrainingSession.update(id, updates);
+      res.status(200).json({
+        success: true,
+        message: 'Session updated successfully!',
+        session: updatedSession
+      });
+    } catch (error) {
+      res.status(500).json({
+        success: false, 
+        message: 'Error updating session: ' + error.message
+      });
+    }
+  });
+  
+
+router.delete('/sessions/delete/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        // Attempt to delete the session
+        const deletedSession = await PersonalTrainingSession.delete(id);
+
+        // If nothing was returned, the session didn't exist
+        if (!deletedSession) {
+        return res.status(404).json({ message: "Session not found." });
+        }
+
+        // Return the deleted session data
+        res.status(200).json({
+        message: "Session deleted successfully.",
+        deletedSession
+        });
+    } catch (error) {
+        // Handle errors and send a 500 status code
+        res.status(500).json({
+        message: "Error deleting the session.",
+        error: error.message
+        });
+    }
+});
+
 router.post('/join-class', async (req, res) => {
     const { email, password, classId } = req.body;
 
@@ -92,6 +175,21 @@ router.post('/join-class', async (req, res) => {
     }
 });
     
+// Route to delete a class enrollment
+router.delete('/classes/remove/:enrollmentId', async (req, res) => {
+    const { enrollmentId } = req.params;
+
+    try {
+        const success = await Member.removeFromClass(enrollmentId);
+        if (!success) {
+            return res.status(404).json({ success: false, message: 'No enrollment found with that ID' });
+        }
+        res.status(200).json({ success: true, message: 'Enrollment removed successfully' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Error removing enrollment', error: error.message });
+    }
+});
+
 router.get('/search', async (req, res) => {
     const { name } = req.query;
     if (!name) {

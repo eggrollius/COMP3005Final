@@ -28,6 +28,9 @@ class AdminStaff {
     return rows[0];
   }
 
+  static async exists(id) {
+    return !(this.findById(id) === null);
+  }
   /**
    * Create a new administrative staff member in the database.
    * @param {string} name - Name of the administrative staff member.

@@ -1,6 +1,13 @@
 const pool = require('../../config/db'); 
 
 class Trainer {
+    static async findAll() {
+        const { rows } = await pool.query(
+            'SELECT * FROM trainers',
+             []
+        );
+        return rows;
+    }
     static async authenticate(trainerId, password) {
         const { rows } = await pool.query('SELECT password FROM trainers WHERE trainer_id = $1', [trainerId]);
         if (rows.length === 0 || rows[0].password !== password) {

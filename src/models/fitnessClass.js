@@ -4,7 +4,7 @@
  */
 
 const pool = require('../../config/db');
-
+const Room = require('../models/room');
 /**
  * Class representing a fitness class.
  */
@@ -33,13 +33,15 @@ class FitnessClass {
    * @param {string} name - Name of the fitness class.
    * @param {number} trainerId - ID of the trainer conducting the class.
    * @param {number} roomId - ID of the room where the class is held.
-   * @param {Date} schedule - Scheduled date and time for the class.
    * @returns {Promise<Object>} A promise that resolves to the newly created fitness class object.
    */
-  static async create(name, trainerId, roomId, schedule) {
+  static async create(name, room_id, trainer_id, start_time, end_time, capacity, admin_id) {
+    // Create a room booking
+    const roomBooking = Room.book(room_id, start_time, end_time, name, admin_id);
+  
     const { rows } = await pool.query(
-      'INSERT INTO fitness_classes (name, trainer_id, room_id, schedule) VALUES ($1, $2, $3, $4) RETURNING *',
-      [name, trainerId, roomId, schedule]
+      'INSERT INTO fitness_classes (name, trainer_id, room_id, start_time, end_time, capacity, room_booking_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [name, trainer_id, room_id, start_time, end_time, capacity, roomBooking.booking_id]
     );
     return rows[0];
   }

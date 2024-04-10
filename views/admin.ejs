@@ -4,12 +4,86 @@
     <h1>Administrative Staff Functions</h1>
     <section>
         <h2>Manage Room Bookings</h2>
-        <form action="/api/rooms/book" method="POST">
-            <input type="text" name="room_id" placeholder="Room ID" required>
-            <input type="datetime-local" name="booking_time" placeholder="Booking Time" required>
+        <form action="/api/admin/bookRoom" method="POST">
+            <label for="roomSelect">Select Room:</label>
+            <select id="roomSelect" name="room_id" required>
+                <option value="">--Select a Room--</option>
+                <% rooms.forEach(room => { %>
+                    <option value="<%= room.room_id %>"><%= room.name %> - Capacity: <%= room.capacity %></option>
+                <% }); %>
+            </select>
+
+            <label for="startTime">Start Time:</label>
+            <input type="datetime-local" id="startTime" name="start_time" required>
+
+            <label for="endTime">End Time:</label>
+            <input type="datetime-local" id="endTime" name="end_time" required>
+
+            <label for="purpose">Purpose of Booking:</label>
+            <input type="text" id="purpose" name="purpose" placeholder="Describe the purpose" required>
+
             <button type="submit">Book Room</button>
         </form>
     </section>
+
+    <section> 
+        <h2>Create a Group Fitness Class</h2>
+        <form id="createFitnessClassForm">
+            <label for="admin_id">Your admin ID:</label>
+            <input id="admin_id" name="admin_id" type="text" required>
+
+            <label for="name">Name:</label>
+            <input id="name" name="name" type="text" required>
+            
+            <label for="roomSelect">Select Room:</label>
+            <select id="roomSelect" name="room_id" required>
+                <option value="">--Select a Room--</option>
+                <% rooms.forEach(room => { %>
+                    <option value="<%= room.room_id %>"><%= room.name %> - Capacity: <%= room.capacity %></option>
+                <% }); %>
+            </select>
+
+            <label for="trainerSelect">Select a Trainer:</label>
+            <select id="trainerSelect" name="trainer_id" required>
+                <option value="">--Select a Trainer--</option>
+                <% trainers.forEach(trainer => { %>
+                    <option value="<%= trainer.trainer_id %>"><%= trainer.name %></option>
+                <% }); %>
+            </select>
+
+            <label for="startTime">Start Time:</label>
+            <input type="datetime-local" id="startTime" name="start_time" required>
+
+            <label for="endTime">End Time:</label>
+            <input type="datetime-local" id="endTime" name="end_time" required>
+
+            <label for="capacity">Capacity:</label>
+            <input type="number" id="capacity" name="capacity" required>
+            <button type="submit">Create Class</button>
+        </form>
+    </section>
+
+    <section>
+        <h2>Manage Group Fitness Classes</h2>
+        <div id="groupFitnessClassesContainer">
+            <% groupFitnessClasses.forEach(fitnessClass => { %>
+                <form class="classForm" data-class-id="<%= fitnessClass.class_id %>">
+                    <h4>Edit Class</h4>
+                    <label for="className<%= fitnessClass.class_id %>">Name:</label>
+                    <input type="text" id="className<%= fitnessClass.class_id %>" name="name" value="<%= fitnessClass.name %>" required>
+                    
+                    <!-- Additional class attributes like trainer, room, etc. -->
+                    
+                    <label for="classSchedule<%= fitnessClass.class_id %>">Schedule:</label>
+                    <input type="datetime-local" id="classSchedule<%= fitnessClass.class_id %>" name="schedule" value="<%= fitnessClass.schedule.toISOString().slice(0, 16) %>" required>
+                    
+                    <button type="button" onclick='updateClass("<%= fitnessClass.class_id %>")'>Save Changes</button>
+                    <button type="button" onclick='deleteClass("<%= fitnessClass.class_id %>")'>Delete Class</button>                    
+                </form>
+            <% }); %>
+        </div>
+    </section>
+
     <section>
         <h2>Process Payment</h2>
         <form action="/api/payments/process" method="POST">
@@ -23,3 +97,5 @@
 </main>
 
 <%- include('footer') %>
+
+<script src="/js/admin.js"></script>
