@@ -37,7 +37,7 @@ function updateClass(classId) {
     const formData = new FormData(form);
     const classData = Object.fromEntries(formData);
 
-    fetch(`/api/classes/update/${classId}`, {
+    fetch(`/api/fitnessClass/update/${classId}`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(classData)
@@ -55,7 +55,7 @@ function updateClass(classId) {
 
 // Function to delete a class
 function deleteClass(classId) {
-    fetch(`/api/classes/delete/${classId}`, {
+    fetch(`/api/fitnessClass/delete/${classId}`, {
         method: 'DELETE'
     })
     .then(response => response.json())
@@ -68,4 +68,41 @@ function deleteClass(classId) {
         }
     })
     .catch(error => console.error('Error deleting class:', error));
+}
+
+function submitRoomBookingForm() {
+    event.preventDefault();  
+    
+    const form = document.getElementById('roomBookingForm');
+    const formData = new FormData(form);
+
+    // Constructing a JSON object from the form data
+    const data = {
+        room_id: formData.get('room_id'),
+        start_time: formData.get('start_time'),
+        end_time: formData.get('end_time'),
+        purpose: formData.get('purpose'),
+        admin_id: formData.get('admin_id')
+    };
+
+    fetch('/api/admin/bookRoom', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json', // Set content type to JSON
+        },
+        body: JSON.stringify(data)  // Convert the JavaScript object to a JSON string
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Room booked successfully!');
+            form.reset();  // Reset the form fields after successful submission
+        } else {
+            alert('Failed to book room: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error booking room:', error);
+        alert('Error booking room: ' + error.message);
+    });
 }

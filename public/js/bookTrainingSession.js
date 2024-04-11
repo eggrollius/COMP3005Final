@@ -23,7 +23,7 @@ document.getElementById('bookTrainingSessionForm').addEventListener('submit', fu
         if (data.success) {
             alert('Session booked successfully!');
         } else {
-            alert('Failed to book session: ' + data.message);
+            alert('Failed to book session: ' + data.error);
         }
     })
     .catch(error => console.error('Error booking session:', error));

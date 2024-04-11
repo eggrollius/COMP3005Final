@@ -3,7 +3,9 @@ const bodyParser = require('body-parser');
 const Trainer = require('./models/trainer');  
 const FitnessClass = require('./models/fitnessClass');  
 const Room = require('./models/room');  
-
+const RoomBooking = require('./models/roombooking');  
+const Equipment = require('./models/equipment');  
+const Payment = require('./models/payment');  
 const app = express();
 
 // Middlewares
@@ -21,11 +23,15 @@ const memberRoutes = require('./routes/memberRoutes');
 const trainerRoutes = require('./routes/trainerRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const fitnessClassRoutes = require('./routes/fitnessClassRoutes');
+const equipmentRoutes = require('./routes/equipmentRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 app.use('/api/members', memberRoutes);
 app.use('/api/trainers', trainerRoutes);
-app.use('/api/rooms', adminRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/fitnessClass', fitnessClassRoutes);
+app.use('/api/equipment', equipmentRoutes);
+app.use('/api/payment', paymentRoutes);
 
 app.get('/', (req, res) => {
   res.render('index');
@@ -52,8 +58,10 @@ app.get('/admin', async (req, res) => {
     const rooms = await Room.findAll();
     const trainers = await Trainer.findAll();
     const groupFitnessClasses = await FitnessClass.findAll();
-
-    res.render('admin', { rooms, trainers, groupFitnessClasses });
+    const equipments = await Equipment.findAll();
+    const payments = await Payment.findAll();
+    const roomBookings = await RoomBooking.findAll();
+    res.render('admin', { rooms, trainers, groupFitnessClasses, equipments, payments, roomBookings });
   } catch(error) {
     console.error('Error fetching rooms', error);
     res.status(500).send('Error loading page');

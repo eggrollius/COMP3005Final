@@ -2,9 +2,13 @@
 
 <main>
     <h1>Administrative Staff Functions</h1>
+    <!--
     <section>
-        <h2>Manage Room Bookings</h2>
-        <form action="/api/admin/bookRoom" method="POST">
+        <h2>Create Room Bookings</h2>
+        <form id="roomBookingForm">
+            <label for="admin_id">Your admin ID:</label>
+            <input id="admin_id" name="admin_id" type="text" required>
+
             <label for="roomSelect">Select Room:</label>
             <select id="roomSelect" name="room_id" required>
                 <option value="">--Select a Room--</option>
@@ -12,20 +16,45 @@
                     <option value="<%= room.room_id %>"><%= room.name %> - Capacity: <%= room.capacity %></option>
                 <% }); %>
             </select>
-
+        
             <label for="startTime">Start Time:</label>
             <input type="datetime-local" id="startTime" name="start_time" required>
-
+        
             <label for="endTime">End Time:</label>
             <input type="datetime-local" id="endTime" name="end_time" required>
-
+        
             <label for="purpose">Purpose of Booking:</label>
             <input type="text" id="purpose" name="purpose" placeholder="Describe the purpose" required>
-
-            <button type="submit">Book Room</button>
+        
+            <button type="button" onclick="submitRoomBookingForm()">Book Room</button>
         </form>
     </section>
-
+    <section>
+        <h2>Manage Room Bookings</h2>
+        <div id="roomBookingsContainer">
+            <% roomBookings.forEach(booking => { %>
+                <form class="bookingForm" data-booking-id="<%= booking.booking_id %>">
+                    <h4>Edit Booking</h4>
+                    
+                    <label for="roomName<%= booking.name %>">Room:</label>
+                    <input type="text" id="roomName<%= booking.name %>" name="room_name" value="<%= booking.id %>" readonly>
+                    
+                    <label for="startTime<%= booking.booking_id %>">Start Time:</label>
+                    <input type="datetime-local" id="startTime<%= booking.booking_id %>" name="start_time" value="<%= new Date(booking.start_time).toISOString().slice(0, 16) %>" required>
+                    
+                    <label for="endTime<%= booking.booking_id %>">End Time:</label>
+                    <input type="datetime-local" id="endTime<%= booking.booking_id %>" name="end_time" value="<%= new Date(booking.end_time).toISOString().slice(0, 16) %>" required>
+    
+                    <label for="purpose<%= booking.booking_id %>">Purpose:</label>
+                    <input type="text" id="purpose<%= booking.booking_id %>" name="purpose" value="<%= booking.purpose %>" required>
+                    
+                    <button type="button" onclick='updateBooking("<%= booking.booking_id %>")'>Save Changes</button>
+                    <button type="button" onclick='deleteBooking("<%= booking.booking_id %>")'>Delete Booking</button>
+                </form>
+            <% }); %>
+        </div>
+    -->
+    </section>
     <section> 
         <h2>Create a Group Fitness Class</h2>
         <form id="createFitnessClassForm">
@@ -71,12 +100,13 @@
                     <h4>Edit Class</h4>
                     <label for="className<%= fitnessClass.class_id %>">Name:</label>
                     <input type="text" id="className<%= fitnessClass.class_id %>" name="name" value="<%= fitnessClass.name %>" required>
-                    
-                    <!-- Additional class attributes like trainer, room, etc. -->
-                    
-                    <label for="classSchedule<%= fitnessClass.class_id %>">Schedule:</label>
-                    <input type="datetime-local" id="classSchedule<%= fitnessClass.class_id %>" name="schedule" value="<%= fitnessClass.schedule.toISOString().slice(0, 16) %>" required>
-                    
+
+                    <label for="start_time<%= fitnessClass.class_id %>">Start Time:</label>
+                    <input type="datetime-local" id="start_time<%= fitnessClass.class_id %>" name="start_time" value="<%= fitnessClass.start_time.toISOString().slice(0, 16) %>" required>
+
+                    <label for="end_time<%= fitnessClass.class_id %>">End Time:</label>
+                    <input type="datetime-local" id="end_time<%= fitnessClass.class_id %>" name="end_time" value="<%= fitnessClass.end_time.toISOString().slice(0, 16) %>" required>  
+
                     <button type="button" onclick='updateClass("<%= fitnessClass.class_id %>")'>Save Changes</button>
                     <button type="button" onclick='deleteClass("<%= fitnessClass.class_id %>")'>Delete Class</button>                    
                 </form>
@@ -85,17 +115,83 @@
     </section>
 
     <section>
-        <h2>Process Payment</h2>
-        <form action="/api/payments/process" method="POST">
-            <input type="number" name="member_id" placeholder="Member ID" required>
-            <input type="number" name="amount" placeholder="Amount" step="0.01" required>
-            <input type="date" name="payment_date" placeholder="Payment Date" required>
-            <textarea name="description" placeholder="Payment Description"></textarea>
-            <button type="submit">Process Payment</button>
+        <h2>Proccess Payments</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Payment ID</th>
+                    <th>Member ID</th>
+                    <th>Amount</th>
+                    <th>Payment Date</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% payments.forEach(payment => { %>
+                    <tr id="paymentRow<%= payment.payment_id %>">
+                        <td><%= payment.payment_id %></td>
+                        <td><%= payment.member_id %></td>
+                        <td>$<%= payment.amount %></td>
+                        <td><%= new Date(payment.payment_date).toLocaleDateString() %></td>
+                        <td><%= payment.description %></td>
+                        <td>
+                            <button onclick="deletePayment('<%= payment.payment_id %>')">Process</button>
+                            <button onclick="deletePayment('<%= payment.payment_id %>')">Delete</button>
+                        </td>
+                    </tr>
+                    
+                <% }); %>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>Add New Equipment</h2>
+        <form>
+            <label for="equipmentType">Equipment Type:</label>
+            <input type="text" id="equipmentType" name="type" placeholder="Enter equipment type" required>
+        
+            <label for="equipmentStatus">Status:</label>
+            <select id="equipmentStatus" name="status" required>
+                <option value="operational">Operational</option>
+                <option value="maintenance">Maintenance</option>
+                <option value="out_of_service">Out of Service</option>
+            </select>
+        
+            <button type="button" onclick='createNewEquipment()'>Add Equipment</button>
         </form>
+        
+    </section>
+
+    <!-- Section for displaying and editing existing equipment -->
+    <section>
+        <h2>Manage Existing Equipment</h2>
+        <div id="equipmentList">
+            <% equipments.forEach(equipment => { %>
+                <form class="equipmentForm" id="equipmentForm-<%= equipment.equipment_id %>">
+                    <label for="equipmentType<%= equipment.equipment_id %>">Equipment Type:</label>
+                    <input type="text" id="equipmentType<%= equipment.equipment_id %>" name="type" value="<%= equipment.name %>" readonly>
+
+                    <label for="equipmentStatus<%= equipment.equipment_id %>">Status:</label>
+                    <select id="equipmentStatus<%= equipment.equipment_id %>" name="status" required>
+                        <option value="operational" <%= equipment.status === 'operational' ? 'selected' : '' %>>Operational</option>
+                        <option value="maintenance" <%= equipment.status === 'maintenance' ? 'selected' : '' %>>Maintenance</option>
+                        <option value="out_of_service" <%= equipment.status === 'out_of_service' ? 'selected' : '' %>>Out of Service</option>
+                    </select>
+
+                    <button type="submit" onclick='updateEquipmentStatus("<%= equipment.equipment_id %>", "equipmentForm-<%= equipment.equipment_id %>")'>Update Status</button>
+                </form>
+                <form class="equipmentDeleteForm">
+                    <button type="submit"  onclick='deleteEquipment("<%= equipment.equipment_id %>")'>Delete</button>
+                </form>
+            <% }); %>
+        </div>
     </section>
 </main>
 
 <%- include('footer') %>
 
 <script src="/js/admin.js"></script>
+<script src="/js/equipmentManagement.js"></script>
+<script src="/js/payment.js"></script>

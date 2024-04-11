@@ -1,24 +1,32 @@
 const express = require('express');
 const router = express.Router();
-const Member = require('../models/member');  
+const Room = require('../models/room'); 
+const Admin = require('../models/adminStaff'); 
 
 // Book a room
 router.post('/bookRoom', async (req, res) => {
-  const { room_id, start_time, end_time, purpose } = req.body;
-  if (new Date(start_time) >= new Date(end_time)) {
-      return res.status(400).send({ success: false, message: "End time must be after start time." });
-  }
+    const { room_id, start_time, end_time, purpose, admin_id } = req.body;
 
-  try {
-      const { rows } = await pool.query(
-          'INSERT INTO room_bookings (room_id, start_time, end_time, purpose) VALUES ($1, $2, $3, $4) RETURNING *',
-          [room_id, start_time, end_time, purpose]
-      );
-      res.json({ success: true, booking: rows[0] });
-  } catch (error) {
-      console.error('Error booking room:', error);
-      res.status(500).json({ success: false, message: 'Internal server error', error: error.message });
-  }
+    // Validate incoming data
+    if (!room_id || !start_time || !end_time || !purpose || !admin_id) {
+        return res.status(400).json({ success: false, message: "All fields are required" });
+    }
+
+    try {
+        const newBooking = await Room.book(room_id, start_time, end_time, purpose, admin_id);
+        res.status(201).json({
+            success: true,
+            message: 'Room booked successfully',
+            booking: newBooking[0]
+        });
+    } catch (error) {
+        console.error('Error booking room:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to book room',
+            error: error.message
+        });
+    }
 });
 
 

@@ -19,7 +19,7 @@ document.getElementById('joinFitnessClassForm').addEventListener('submit', funct
           alert('Successfully joined the fitness class!');
           location.reload(); // Optionally reload the page or redirect
       } else {
-          alert('Failed to join class: ' + data.message);
+          alert('Failed to join class: ' + data.error);
       }
   })
   .catch(error => console.error('Error joining class:', error));

@@ -4,7 +4,7 @@
  */
 
 const pool = require('../../config/db');  // Database connection pool
-
+const Payment = require('./payment');
 /**
  * Class representing a member.
  */
@@ -41,7 +41,8 @@ class Member {
             ce.enrollment_id,
             fc.class_id,
             fc.name AS class_name,
-            fc.schedule,
+            fc.start_time,
+            fc.end_time,
             fc.room_id,
             fc.capacity,
             ce.enrollment_date
@@ -231,6 +232,9 @@ class Member {
           RETURNING *;
       `;
       const { rows } = await pool.query(insertQuery, [memberId, trainerId, startTime, endTime]);
+      
+      Payment.create(memberId, 50, startTime, 'Personal Training Session');
+      
       return rows[0];
 
     } catch(error) {
@@ -238,22 +242,43 @@ class Member {
       throw error;
     }
   }
-
+  
   static async enrollInClass(memberId, classId) {
+    // Check if the member is already enrolled in the class
     const { rows: existingEnrollments } = await pool.query(
-        'SELECT * FROM class_enrollments WHERE member_id = $1 AND class_id = $2',
+        'SELECT 1 FROM class_enrollments WHERE member_id = $1 AND class_id = $2',
         [memberId, classId]
     );
     if (existingEnrollments.length > 0) {
         throw new Error('Already enrolled in this class');
     }
 
+    // Insert the new enrollment and join with the fitness_classes table to fetch class details
     const { rows } = await pool.query(
-        'INSERT INTO class_enrollments (member_id, class_id) VALUES ($1, $2) RETURNING *',
+        `INSERT INTO class_enrollments (member_id, class_id)
+         VALUES ($1, $2)
+         RETURNING *,
+         (SELECT name FROM fitness_classes WHERE class_id = $2) as class_name,
+         (SELECT start_time FROM fitness_classes WHERE class_id = $2) as class_start_time`,
         [memberId, classId]
     );
-    return rows[0]; 
-  }
+
+    // Check if any row was returned
+    if (rows.length === 0) {
+        throw new Error('Failed to enroll in class or class does not exist');
+    }
+
+    // Assuming a Payment.create method exists to handle payment processing
+    Payment.create(memberId, 25, rows[0].class_start_time, `Fitness Class: ${rows[0].class_name}`);
+
+    return {
+        enrollmentId: rows[0].enrollment_id,
+        memberId: rows[0].member_id,
+        classId: rows[0].class_id,
+        className: rows[0].class_name,
+        classStartTime: rows[0].class_start_time
+    };
+}
 
 
     /**

@@ -53,13 +53,21 @@ class FitnessClass {
    * @returns {Promise<Object>} A promise that resolves to the updated fitness class object.
    */
   static async update(id, updates) {
-    const existingClass = await this.findById(id);
-    const newDetails = { ...existingClass, ...updates };
-    const { rows } = await pool.query(
-      'UPDATE fitness_classes SET name = $1, trainer_id = $2, room_id = $3, schedule = $4 WHERE class_id = $5 RETURNING *',
-      [newDetails.name, newDetails.trainerId, newDetails.roomId, newDetails.schedule, id]
-    );
-    return rows[0];
+    try {
+      const existingClass = await this.findById(id);
+      const newDetails = { ...existingClass, ...updates };
+      console.log(id);
+      console.log(newDetails);
+      const { rows } = await pool.query(
+        'UPDATE fitness_classes SET name = $1, start_time = $2, end_time = $3 WHERE class_id = $4 RETURNING *',
+        [newDetails.name, newDetails.start_time, newDetails.end_time, id]
+      );
+      return rows[0];
+    } catch(error) {
+      console.log(error);
+      throw new Error('Error updating class');
+    }
+
   }
 
   /**

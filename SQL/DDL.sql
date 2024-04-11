@@ -1,5 +1,5 @@
 DROP TABLE IF EXISTS members, trainers, trainer_availability, admin_staff, fitness_classes, class_enrollments, personal_training_sessions, rooms, room_bookings, equipment, payments CASCADE;
-
+DROP TYPE IF EXISTS equipment_status;
 CREATE TABLE members (
     member_id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -13,8 +13,7 @@ CREATE TABLE members (
 CREATE TABLE trainers (
     trainer_id SERIAL PRIMARY KEY,
     password VARCHAR(255) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    specialization VARCHAR(255)
+    name VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE trainer_availability (
@@ -76,10 +75,14 @@ CREATE TABLE class_enrollments (
     UNIQUE (member_id, class_id)
 );
 
+-- Create ENUM type for equipment status
+CREATE TYPE equipment_status AS ENUM ('operational', 'maintenance', 'out_of_service');
+
+-- Create the table using the ENUM type
 CREATE TABLE equipment (
     equipment_id SERIAL PRIMARY KEY,
-    type VARCHAR(255) NOT NULL,
-    status VARCHAR(100) NOT NULL 
+    name VARCHAR(255) NOT NULL,
+    status equipment_status NOT NULL
 );
 
 CREATE TABLE payments (
@@ -89,33 +92,3 @@ CREATE TABLE payments (
     payment_date TIMESTAMP NOT NULL,
     description VARCHAR(255) NOT NULL 
 );
-
-INSERT INTO members (name, email, password, dob, fitness_goals, health_metrics)
-VALUES ('John Doe', 'john@example.com', '1234', '1990-01-01', '{"weight": "180lbs", "runTime": "30min"}', '{"heartRate": 60}');
-
-INSERT INTO trainers (name, specialization, password)
-VALUES ('Jane Smith', 'Yoga Instructor', '1234');
-
--- Insert availability times for Jane Smith around April 9th, 2024
-INSERT INTO trainer_availability (trainer_id, available_from, available_to)
-VALUES 
-    (1, '2024-04-09 08:00:00', '2024-04-09 12:00:00'), -- Morning session
-    (1, '2024-04-09 14:00:00', '2024-04-09 18:00:00'), -- Afternoon session
-    (1, '2024-04-10 08:00:00', '2024-04-10 12:00:00'), -- Next day morning session
-    (1, '2024-04-10 14:00:00', '2024-04-10 18:00:00'); -- Next day afternoon session
-
-INSERT INTO admin_staff (name, role)
-VALUES
-    ('bob smith', 'owner'),
-    ('jeffrey, levin', 'co-owner');
-
-INSERT INTO rooms (name) VALUES
-('Yoga Studio'),
-('Spinning Room'),
-('Aerobics Hall');
-
-INSERT INTO fitness_classes (name, trainer_id, room_id, capacity, start_time, end_time)
-VALUES 
-('Morning Yoga', 1, 1, 20, '2024-04-09 09:00:00', '2024-04-09 11:00:00'),
-('Evening Spinning', 1, 2, 15, '2024-04-09 17:00:00', '2024-04-09 11:00:00'),
-('Aerobics Class', 1, 3, 25, '2024-04-10 10:00:00', '2024-04-010 11:00:00');

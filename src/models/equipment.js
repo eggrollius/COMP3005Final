@@ -29,33 +29,69 @@ class Equipment {
   }
 
   /**
-   * Create new equipment in the database.
-   * @param {string} type - Type of the equipment.
-   * @param {string} status - Current status of the equipment (e.g., 'available', 'under maintenance').
-   * @returns {Promise<Object>} A promise that resolves to the newly created equipment object.
+   * Delete a piece of equipment from the database by ID.
+   * @param {number} id - The ID of the equipment to delete.
+   * @returns {Promise<Object>} A promise that resolves to the deletion result.
    */
-  static async create(type, status) {
-    const { rows } = await pool.query(
-      'INSERT INTO equipment (type, status) VALUES ($1, $2) RETURNING *',
-      [type, status]
-    );
-    return rows[0];
+  static async deleteById(id) {
+    try {
+        const { rows } = await pool.query(
+            'DELETE FROM equipment WHERE equipment_id = $1 RETURNING *', [id]
+        );
+        if (rows.length === 0) {
+            throw new Error(`No equipment found with ID ${id}`);
+        }
+        return rows[0]; // Returns the deleted equipment object
+    } catch (error) {
+        console.error('Error deleting equipment:', error);
+        throw error;
+    }
+  }
+
+    /**
+     * Create a new piece of equipment in the database.
+     * @param {string} name - The name of the equipment.
+     * @param {string} status - The status of the equipment (e.g., "operational", "maintenance").
+     * @returns {Promise<Object>} A promise that resolves to the newly created equipment object.
+     */
+    static async create(name, status) {
+      try {
+          const { rows } = await pool.query(
+              'INSERT INTO equipment (name, status) VALUES ($1, $2) RETURNING *',
+              [name, status]
+          );
+          return rows[0]; // Returns the new equipment object
+      } catch (error) {
+          console.error('Error creating equipment:', error);
+          throw error;
+      }
   }
 
   /**
-   * Update details of existing equipment in the database.
-   * @param {number} id - Unique identifier of the equipment to update.
-   * @param {Object} updates - An object containing updates to the equipment's details.
-   * @returns {Promise<Object>} A promise that resolves to the updated equipment object.
-   */
-  static async update(id, updates) {
-    const existingEquipment = await this.findById(id);
-    const newDetails = { ...existingEquipment, ...updates };
-    const { rows } = await pool.query(
-      'UPDATE equipment SET type = $1, status = $2 WHERE equipment_id = $3 RETURNING *',
-      [newDetails.type, newDetails.status, id]
-    );
-    return rows[0];
+     * Update details of an existing equipment item in the database.
+     * @param {number} id - Unique identifier of the equipment to update.
+     * @param {string} name - New name of the equipment.
+     * @param {string} status - New status of the equipment.
+     * @returns {Promise<Object>} A promise that resolves to the updated equipment object.
+     */
+  static async update(id, name, status) {
+    try {
+      const query = `
+        UPDATE equipment
+        SET name = $1, status = $2
+        WHERE equipment_id = $3
+        RETURNING *;
+      `;
+      const { rows } = await pool.query(query, [name, status, id]);
+      if (rows.length) {
+        return rows[0];  // Return the first row (updated equipment)
+      } else {
+        throw new Error(`Equipment with ID ${id} not found.`);
+      }
+    } catch (error) {
+      console.error('Error updating equipment:', error);
+      throw error;  // Rethrow to handle error outside this function
+    }
   }
 
   /**

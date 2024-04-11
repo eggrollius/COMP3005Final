@@ -3,7 +3,7 @@
  * @module models/Room
  */
 
-const pool = require('../../config/db');  // Database connection pool
+const pool = require('../../config/db');
 const Admin = require('../models/adminStaff');
 
 /**

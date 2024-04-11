@@ -19,8 +19,7 @@
             <input type="email" name="email" placeholder="Email" required>
             <input type="password" name="password" placeholder="Password" required>
             <input type="date" name="dob" placeholder="Date of Birth" required>
-            <textarea name="fitness_goals" placeholder="Fitness Goals"></textarea>
-            <textarea name="health_metrics" placeholder="Health Metrics"></textarea>
+            
             <button type="submit">Add Member</button>
         </form>
     </section>
@@ -28,8 +27,8 @@
     <section>
         <h2>Update Profile</h2>
         <form id="updateProfileForm">
-            <input type="email" name="email" placeholder="Your Current Email" required>
-            <input type="password" name="password" placeholder="Your Current Password" required>
+            <input id="updateEmail" type="email" name="email" placeholder="Your Current Email" required>
+            <input id= "updatePassword" type="password" name="password" placeholder="Your Current Password" required>
             <input type="email" name="newEmail" placeholder="New Email (optional)">
             <input type="password" name="newPassword" placeholder="New Password (optional)">
             <input type="date" name="newDob" placeholder="New Date of Birth (optional)">
@@ -84,13 +83,17 @@
         <form id="joinFitnessClassForm">
             <input type="email" name="email" placeholder="Your Email" required>
             <input type="password" name="password" placeholder="Your Password" required>
+            
+            <br>
             <label for="classSelect">Select Fitness Class:</label>
+            <br>
             <select id="classSelect" name="classId" required>
                 <option value="">--Select a Class--</option>
                 <% fitnessClasses.forEach(function(fitnessClass) { %>
-                    <option value="<%= fitnessClass.class_id %>"><%= fitnessClass.name %> - <%= fitnessClass.schedule %></option>
+                    <option value="<%= fitnessClass.class_id %>"><%= fitnessClass.name %> - <%= fitnessClass.start_time %> - <%= fitnessClass.start_time %></option>
                 <% }); %>
             </select>
+            <br>
             <button type="submit">Join Class</button>
         </form>
     </section>
