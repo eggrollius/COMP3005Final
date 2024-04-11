@@ -102,10 +102,10 @@
                     <input type="text" id="className<%= fitnessClass.class_id %>" name="name" value="<%= fitnessClass.name %>" required>
 
                     <label for="start_time<%= fitnessClass.class_id %>">Start Time:</label>
-                    <input type="datetime-local" id="start_time<%= fitnessClass.class_id %>" name="start_time" value="<%= fitnessClass.start_time.toLocaleDateString().slice(0, 16) %>" required>
+                    <input type="datetime-local" id="start_time<%= fitnessClass.class_id %>" name="start_time" value="<%= formatDateTime(fitnessClass.start_time) %>" required>
 
                     <label for="end_time<%= fitnessClass.class_id %>">End Time:</label>
-                    <input type="datetime-local" id="end_time<%= fitnessClass.class_id %>" name="end_time" value="<%= fitnessClass.end_time.toLocaleDateString().slice(0, 16) %>" required>  
+                    <input type="datetime-local" id="end_time<%= fitnessClass.class_id %>" name="end_time" value="<%= formatDateTime(fitnessClass.end_time.toLocaleDateString()) %>" required>  
 
                     <button type="button" onclick='updateClass("<%= fitnessClass.class_id %>")'>Save Changes</button>
                     <button type="button" onclick='deleteClass("<%= fitnessClass.class_id %>")'>Delete Class</button>                    

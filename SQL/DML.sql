@@ -1,6 +1,6 @@
 -- Insert data into members
 INSERT INTO members (name, email, password, dob, fitness_goals, health_metrics)
-VALUES ('Test Guy', 'test@example.com', '1234', '1990-01-01', '{"weight": "180lbs", "runTime": "30min"}', '{"heartRate": 60}')
+VALUES ('Test Guy', 'test@example.com', '1234', '1990-01-01', '{"weight": "180lbs", "runTime": "30min"}', '{"heartRate": 60}'),
        ('Test Guy2', 'test2@example.com', '1234', '1990-01-01', '{"weight": "180lbs", "runTime": "30min"}', '{"heartRate": 60}');
 
 -- Insert data into trainers

@@ -53,6 +53,13 @@ app.get('/trainer', (req, res) => {
   res.render('trainer');
 });
 
+function formatDateTime(dateTimeStr) {
+  const date = new Date(dateTimeStr);
+  const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+  const localDate = new Date(date.getTime() - userTimezoneOffset);
+  return localDate.toISOString().slice(0, 16);
+}
+
 app.get('/admin', async (req, res) => {
   try {
     const rooms = await Room.findAll();
@@ -61,7 +68,7 @@ app.get('/admin', async (req, res) => {
     const equipments = await Equipment.findAll();
     const payments = await Payment.findAll();
     const roomBookings = await RoomBooking.findAll();
-    res.render('admin', { rooms, trainers, groupFitnessClasses, equipments, payments, roomBookings });
+    res.render('admin', { rooms, trainers, groupFitnessClasses, equipments, payments, roomBookings, formatDateTime });
   } catch(error) {
     console.error('Error fetching rooms', error);
     res.status(500).send('Error loading page');

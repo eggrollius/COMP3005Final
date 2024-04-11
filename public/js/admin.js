@@ -70,6 +70,22 @@ function deleteClass(classId) {
     .catch(error => console.error('Error deleting class:', error));
 }
 
+function formatDateTime(dateTimeStr) {
+    // Create a new Date object using the date-time string
+    const date = new Date(dateTimeStr);
+
+    // Adjust the date-time from UTC to the local timezone
+    // getTimezoneOffset returns the difference in minutes between UTC and the local time zone,
+    // which we convert to milliseconds to adjust the date.
+    const userTimezoneOffset = date.getTimezoneOffset() * 60000; // Convert to milliseconds
+
+    // Create a new Date object adjusted for the local time zone
+    const localDate = new Date(date.getTime() - userTimezoneOffset);
+
+    // Format the local date to the datetime-local input format (YYYY-MM-DDTHH:MM)
+    return localDate.toISOString().slice(0, 16);
+}
+
 function submitRoomBookingForm() {
     event.preventDefault();  
     
